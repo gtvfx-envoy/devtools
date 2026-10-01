@@ -1,0 +1,31 @@
+name: Linux runner smoke test
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, Linux, X64, debian-13, ci]
+    timeout-minutes: 5
+    steps:
+      - name: Verify runner and workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'Runner: %s\n' "$RUNNER_NAME"
+          test "$RUNNER_NAME" = gha-linux-01
+          id
+          test "$(id -un)" = runner
+          cat /etc/os-release
+          uname -r
+          printf 'Available CPUs: '
+          nproc
+          free -h
+          df -h "$GITHUB_WORKSPACE"
+          test_file=$(mktemp "$GITHUB_WORKSPACE/.runner-smoke.XXXXXX")
+          trap 'rm -f -- "$test_file"' EXIT
+          printf 'Runner workspace test\n' > "$test_file"
+          test "$(cat "$test_file")" = 'Runner workspace test'
+          printf 'Smoke test passed.\n'
